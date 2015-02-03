@@ -1,0 +1,5 @@
+# i2c device bus number
+I2C_BUS=0
+
+# report interval in seconds
+REPORT_INTERVAL=5

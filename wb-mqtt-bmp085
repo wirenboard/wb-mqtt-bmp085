@@ -1,0 +1,64 @@
+#!/bin/sh
+set -e
+BUS=${1:-0}
+INTERVAL=${2:-5}
+
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+init_i2c() {
+	echo "0x77" >  /sys/bus/i2c/devices/i2c-${BUS}/delete_device || true
+	echo "bmp085 0x77" >  /sys/bus/i2c/devices/i2c-${BUS}/new_device
+}
+
+
+DEV_PATH="/sys/class/i2c-dev/i2c-${BUS}/device/0-0077/"
+PRESSURE_INPUT_PATH="${DEV_PATH}/pressure0_input"
+TEMP_INPUT_PATH="${DEV_PATH}/temp0_input"
+MQTT_DEVICE_ID="bmp085-$BUS"
+
+
+init_i2c
+
+if [ ! -e ${DEV_PATH} ]; then
+	die "Device path ${DEV_PATH} does not exist"
+fi
+
+if [ ! -e ${PRESSURE_INPUT_PATH} ]; then
+	die "Pressure input file ${PRESSURE_INPUT_PATH} does not exists"
+fi
+
+if [ ! -e ${TEMP_INPUT_PATH} ]; then
+	die "Temperature input file ${TEMP_INPUT_PATH} does not exists"
+fi
+
+
+
+mosquitto_pub -t "/devices/${MQTT_DEVICE_ID}/meta/name" -r -m "BMP085 Sensor ($BUS)"
+mosquitto_pub -t "/devices/${MQTT_DEVICE_ID}/controls/pressure/meta/type" -r -m "pressure"
+mosquitto_pub -t "/devices/${MQTT_DEVICE_ID}/controls/temperature/meta/type" -r -m "temperature"
+
+
+while [ 1 ]; do
+
+	# temperature reading must preceed pressure reading
+	TEMP_INPUT=`cat ${TEMP_INPUT_PATH}`
+	PRESSURE_INPUT=`cat ${PRESSURE_INPUT_PATH}`
+
+	if [ ${PRESSURE_INPUT} = 236 ]; then
+		#workaround for kernel bug
+		echo "warning: reinit i2c"
+		init_i2c
+	fi;
+
+	PRESSURE=`echo scale=2 \; ${PRESSURE_INPUT} / 100 | bc`
+	TEMP=`echo scale=1 \; ${TEMP_INPUT} / 10 | bc`
+
+
+	mosquitto_pub -t "/devices/${MQTT_DEVICE_ID}/controls/pressure" -r -m "$PRESSURE"
+	mosquitto_pub -t "/devices/${MQTT_DEVICE_ID}/controls/temperature" -r -m "$TEMP"
+
+
+
+	sleep ${INTERVAL}
+done

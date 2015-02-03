@@ -1,0 +1,11 @@
+Source: wb-mqtt-bmp085
+Maintainer: Evgeny Boger <boger@contactless.ru>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9), pkg-config
+
+Package: wb-mqtt-bmp085
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, mosquitto-clients, bc
+Description: MQTT driver for BMP085 and BMP180 pressure sensors

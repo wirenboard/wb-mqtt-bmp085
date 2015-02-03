@@ -1,0 +1,6 @@
+wb-mqtt-bmp085 (1.0) stable; urgency=medium
+
+  * Initial release. Simple daemon to send temperature and pressure
+   values of BMP085 and BMP180 (with kernel driver) to MQTT
+
+ -- Evgeny Boger <boger@contactless.ru>  Mon, 02 Feb 2015 21:49:52 +0300
