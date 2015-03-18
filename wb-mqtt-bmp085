@@ -20,6 +20,8 @@ MQTT_DEVICE_ID="bmp085-$BUS"
 
 init_i2c
 
+sleep 2
+
 if [ ! -e ${DEV_PATH} ]; then
 	die "Device path ${DEV_PATH} does not exist"
 fi
